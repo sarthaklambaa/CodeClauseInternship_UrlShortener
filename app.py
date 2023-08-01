@@ -1,62 +1,40 @@
-from flask import Flask, render_template, request, redirect, url_for
+# Importing required modules
+import os
+from datetime import datetime
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+# Creating the Flask app
+app = Flask(__name__)
 
-app = Flask(__name__, template_folder='/home/joseph/Desktop/url_shortener/template')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///urls.db'
+# Creating SQLite Database
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db" #url is name
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-class URL(db.Model):
+class ShortUrls(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    original_url = db.Column(db.String(500))
-    short_url = db.Column(db.String(10))
+    original_url = db.Column(db.String(500), nullable=False)
+    short_id = db.Column(db.String(20), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime(), default=datetime.now(), nullable=False)
+
+    def __init__(self, long, short):
+      self.long = long
+      self.short = short
 
 with app.app_context():
     db.create_all()
 
-import random
-import string
+# Defining the index route
+@app.route('/', methods = ['POST','GET'])
+def index():
+   if request.method == 'POST':
+      url_received = request.form['url']
+      print(url_received)
+      return url_received
+   else:
+      return render_template('index.html')
 
-def generate_short_url():
-    letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
-    while True:
-        short_url = ''.join(random.choice(letters) for i in range(6))
-        url = URL.query.filter_by(short_url=short_url).first()
-        if not url:
-            return short_url
-
-
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        original_url = request.form['url']
-        url = URL.query.filter_by(original_url=original_url).first()
-        if url:
-            return redirect(url_for('display_short_url', short_url=url.short_url))
-        else:
-            short_url = generate_short_url()
-            new_url = URL(original_url=original_url, short_url=short_url)
-            db.session.add(new_url)
-            db.session.commit()
-            return redirect(url_for('display_short_url', short_url=short_url))
-    return render_template('home.html')
-
-
-@app.route('/<short_url>')
-def display_short_url(short_url):
-    url = URL.query.filter_by(short_url=short_url).first()
-    if url:
-        return render_template('short_url.html', original_url=url.original_url, short_url=url.short_url)
-    else:
-        return f'Short URL {short_url} not found'
-
-
-@app.route('/<short_url>/redirect')
-def redirect_to_original_url(short_url):
-    url = URL.query.filter_by(short_url=short_url).first()
-    if url:
-        return redirect(url.original_url)
-    else:
-        return f'Short URL {short_url} not found'
-
+# Running the Flask application
 if __name__ == '__main__':
-    app.run(debug=True)
+   app.run(debug=True)

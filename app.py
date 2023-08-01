@@ -1,7 +1,7 @@
 # Importing required modules
 import os
 from datetime import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
 # Creating the Flask app
@@ -20,9 +20,11 @@ class ShortUrls(db.Model):
     created_at = db.Column(db.DateTime(), default=datetime.now(), nullable=False)
 
 # Defining the index route
-@app.route('/')
+@app.route('/', methods = ['POST','GET'])
 def index():
-   return render_template('index.html')
+   if request.method == 'POST':
+      url_received = request.form['url']
+      print(url_received)
 
 # Running the Flask application
 if __name__ == '__main__':

@@ -7,6 +7,11 @@ from flask_sqlalchemy import SQLAlchemy
 # Creating the Flask app
 app = Flask(__name__)
 
+# Creating ShortURL
+def shorten_url(url):
+    hash = hashlib.sha1(url.encode('utf-8')).hexdigest()[:6]
+    return hash
+
 # Creating SQLite Database
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db"
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db" #url is name
@@ -31,8 +36,9 @@ with app.app_context():
 def index():
    if request.method == 'POST':
       url_received = request.form['url']
-      print(url_received)
-      return url_received
+      short_url = shorten_url(url_received)
+      print(short_url)
+      return short_url
    else:
       return render_template('index.html')
 

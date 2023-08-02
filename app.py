@@ -1,5 +1,6 @@
 # Importing required modules
 import os
+import hashlib
 from datetime import datetime
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy

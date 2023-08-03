@@ -3,6 +3,7 @@ import os
 import hashlib
 from datetime import datetime
 from flask import Flask, render_template, request, redirect
+from urllib.parse import urljoin, urlparse
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -37,12 +38,17 @@ with app.app_context():
 
 # Defining the index route
 @app.route('/', methods=['POST', 'GET'])
-
 def index():
     if request.method == 'POST':
         url_received = request.form['url']
-        short_url_id = shorten_url(url_received)
-        short_url = ShortUrls(original_url=url_received, short_id=short_url_id)
+
+        parsed_url = urlparse(url_received)
+        if not parsed_url.scheme:
+            url_received = "https://" + url_received
+
+        full_url = urljoin(request.url_root, url_received)
+        short_url_id = shorten_url(full_url)
+        short_url = ShortUrls(original_url=full_url, short_id=short_url_id)
         db.session.add(short_url)
         db.session.commit()
         short_url_text = f"{request.url_root}{short_url.get_short_url()}"

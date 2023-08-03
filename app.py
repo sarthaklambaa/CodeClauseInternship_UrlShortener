@@ -2,8 +2,10 @@
 import os
 import hashlib
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
+
 from flask_sqlalchemy import SQLAlchemy
+
 # Creating the Flask app
 app = Flask(__name__)
 
@@ -14,7 +16,6 @@ def shorten_url(url):
 
 # Creating SQLite Database
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db"
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///url.db" #url is name
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -24,24 +25,35 @@ class ShortUrls(db.Model):
     short_id = db.Column(db.String(20), nullable=False, unique=True)
     created_at = db.Column(db.DateTime(), default=datetime.now(), nullable=False)
 
-    def __init__(self, long, short):
-      self.long = long
-      self.short = short
+    def __init__(self, original_url, short_id):
+        self.original_url = original_url
+        self.short_id = short_id
+
+    def get_short_url(self):
+        return f'/{self.short_id}'
 
 with app.app_context():
     db.create_all()
 
 # Defining the index route
-@app.route('/', methods = ['POST','GET'])
+@app.route('/', methods=['POST', 'GET'])
 def index():
-   if request.method == 'POST':
-      url_received = request.form['url']
-      short_url = shorten_url(url_received)
-      print(short_url)
-      return short_url
-   else:
-      return render_template('index.html')
+    if request.method == 'POST':
+        url_received = request.form['url']
+        short_url_id = shorten_url(url_received)
+        short_url = ShortUrls(original_url=url_received, short_id=short_url_id)
+        db.session.add(short_url)
+        db.session.commit()
+        return f"Shortened URL: {request.url_root}{short_url.get_short_url()}"
+    else:
+        return render_template('index.html')
+
+# Route for redirection
+@app.route('/<short_id>')
+def redirect_to_url(short_id):
+    short_url = ShortUrls.query.filter_by(short_id=short_id).first_or_404()
+    return redirect(short_url.original_url)
 
 # Running the Flask application
 if __name__ == '__main__':
-   app.run(debug=True)
+    app.run(debug=True)

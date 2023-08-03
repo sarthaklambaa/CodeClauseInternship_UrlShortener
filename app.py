@@ -38,15 +38,15 @@ with app.app_context():
 # Defining the index route
 @app.route('/', methods=['POST', 'GET'])
 def index():
-    short_url = None
     if request.method == 'POST':
         url_received = request.form['url']
         short_url_id = shorten_url(url_received)
         short_url = ShortUrls(original_url=url_received, short_id=short_url_id)
         db.session.add(short_url)
         db.session.commit()
-        short_url = request.url_root + short_url.get_short_url()
-    return render_template('index.html', short_url=short_url)
+        return f"Shortened URL: {request.url_root}{short_url.get_short_url()}"
+    else:
+        return render_template('index.html')
 
 # Route for redirection
 @app.route('/<short_id>')

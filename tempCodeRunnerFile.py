@@ -37,7 +37,6 @@ with app.app_context():
 
 # Defining the index route
 @app.route('/', methods=['POST', 'GET'])
-
 def index():
     if request.method == 'POST':
         url_received = request.form['url']
@@ -45,8 +44,7 @@ def index():
         short_url = ShortUrls(original_url=url_received, short_id=short_url_id)
         db.session.add(short_url)
         db.session.commit()
-        short_url_text = f"{request.url_root}{short_url.get_short_url()}"
-        return render_template('index.html', short_url=short_url_text)
+        return f"Shortened URL: {request.url_root}{short_url.get_short_url()}"
     else:
         return render_template('index.html')
 
